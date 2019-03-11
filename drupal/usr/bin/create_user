@@ -53,11 +53,11 @@ for argument in "$@"; do
       ;;
     '--admin')
       admin=true
-      set -- $(remove_from_parameters "$argument" "$@")
+      set -- $(remove_from_array "$argument" "$@")
       ;;
     --* | -*)
       echo "Unknown argument: $argument"
-      set -- $(remove_from_parameters "$argument" "$@")
+      set -- $(remove_from_array "$argument" "$@")
       ;;
   esac
 done
