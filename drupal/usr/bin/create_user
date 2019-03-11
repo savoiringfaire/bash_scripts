@@ -1,0 +1,79 @@
+#!/bin/bash
+#
+# Wrapper script around drush to create a user with certain attributes such as admin rights.
+
+# Settings to be changed if you want to use drush8 (or any other drush version)
+#  TODO(marcushann): This can be auto-detected based on command-line argument.
+DRUSH_BINARY="drush9"
+DRUSH_ADD_ROLE_COMMAND="user-add-role"
+DRUSH_LOGIN_COMMAND="uli"
+DRUSH_CREATE_COMMAND="ucrt"
+
+show_help() {
+  echo "Create admin users for a drupal site using drush"
+  echo
+  echo "Usage:"
+  echo "  $0 <drush_alias> <username>"
+  echo
+  echo "Options:"
+  echo "  -h --help     Show this screen"
+  echo "  --admin       User should be an admin"
+}
+
+#######################################
+# Remove the given element from the given array and print the result.
+# Globals:
+#   None
+# Arguments:
+#   $1:    The element to remove.
+#   $2...: The array from which to remove the key.
+# Returns:
+#   Prints out $2... without $1. No return code.
+#######################################
+remove_from_array() {
+  to_remove=$1
+  shift
+
+  for arg do
+    shift
+    [ "$arg" = "--admin" ] && continue
+    set -- "$@" "$arg"
+  done
+
+  echo "$@"
+}
+
+admin=false
+
+for argument in "$@"; do
+  case $argument in
+    '--help' | '-h')
+      show_help
+      exit 1
+      ;;
+    '--admin')
+      admin=true
+      set -- $(remove_from_parameters "$argument" "$@")
+      ;;
+    --* | -*)
+      echo "Unknown argument: $argument"
+      set -- $(remove_from_parameters "$argument" "$@")
+      ;;
+  esac
+done
+
+if [[ $# -ne 2 ]]; then
+  show_help
+  exit 1
+fi
+
+alias=$1
+username=$2
+
+$DRUSH_BINARY @$alias $DRUSH_CREATE_COMMAND $username
+
+if [[ $admin ]]; then
+  $DRUSH_BINARY @$alias $DRUSH_ADD_ROLE_COMMAND administrator $username
+fi
+
+$DRUSH_BINARY @$alias $DRUSH_LOGIN_COMMAND --name=$username
